@@ -9,11 +9,14 @@
 	<button>Switch Camera</button>
 
 	<script type="text/javascript">
+		// 123
 		let current_cam = 'environment';
 		let qrScanner = createScanner(current_cam);
 		let scanInterval;
 
-      	qrScanner.start();
+      	//qrScanner.start();
+
+      	setupScanning();
 
       	document.querySelector('button').addEventListener('click', function(){
 			if (current_cam == 'environment')
