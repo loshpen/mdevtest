@@ -9,24 +9,31 @@
 	<button>Switch Camera</button>
 
 	<script type="text/javascript">
-		const video = document.querySelector('#video');
 		const current_cam = 'environment';
 		const constraints = {video: {facingMode: current_cam}};
 
-		navigator.mediaDevices.getUserMedia(constraints)
-		.then(stream => {
-			video.srcObject = stream;
-			video.play();
-		}).catch(err => {
-			console.log(err)
-		});
+		displayCamera(constraints);
 
 		document.querySelector('button').addEventListener('click', function(){
 			if (current_cam == 'environment')
 				constraints.video.facingMode = 'user';
 			else
 				constraints.video.facingMode = 'environment';
+
+			displayCamera(constraints);
 		});
+
+		function displayCamera(constraints) {
+			const video = document.querySelector('#video');
+
+			navigator.mediaDevices.getUserMedia(constraints)
+			.then(stream => {
+				video.srcObject = stream;
+				video.play();
+			}).catch(err => {
+				console.log(err)
+			});
+		}
 	</script>
 </body>
 </html>
