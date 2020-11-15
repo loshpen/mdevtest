@@ -5,6 +5,7 @@
 	<script type="text/javascript" src="instascan.min.js"></script>
 </head>
 <body>
+	<div style="background-color: 'white'; font-size: 20px;"></div>
 	<video id="video"></video>
 
 	<script type="text/javascript">
@@ -51,6 +52,7 @@
 
 	    function handleQRContent(content) {
 	    	console.log(content);
+	    	document.querySelector(div).textContent = content;
 	    	if(content == 1) {
 	    		flash('success');
 	    	}
