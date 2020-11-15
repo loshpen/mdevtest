@@ -2,24 +2,31 @@
 <html>
 <head>
 	<title></title>
+	<script type="text/javascript" src="instascan.min.js"></script>
 </head>
 <body>
 	<video id="video"></video>
 
 	<script type="text/javascript">
-		const constraints = {
-			video: {facingMode: 'environment'}
-		};
+		const video = document.querySelector('#video');
+		const current_cam = 'environmental';
+		const constraints = {video: {facingMode: current_cam}};
 
 		navigator.mediaDevices.getUserMedia(constraints)
 		.then(stream => {
-			console.log(stream);
-			const video = document.querySelector('#video');
 			video.srcObject = stream;
 			video.play();
 		}).catch(err => {
 			console.log(err)
 		});
+
+		document.querySelector('button').addEventListener('click', function(){
+			if (current_cam == 'environmental')
+				constraints.video.facingMode = 'user';
+			else
+				constraints.video.facingMode = 'environmental';
+		});
 	</script>
+	<button>Switch Camera</button>
 </body>
 </html>
