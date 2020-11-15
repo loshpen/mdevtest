@@ -9,6 +9,7 @@
 	<button>Switch Camera</button>
 
 	<script type="text/javascript">
+		// 123
 		let current_cam = 'user';
 		let qrScanner = createScanner(current_cam);
 
@@ -20,9 +21,7 @@
 			else
 				current_cam = 'environment';
 
-			qrScanner.stop();
-
-			qrScanner.destroy();
+			destroyScanner(qrScanner);
 
 			qrScanner = createScanner(current_cam);
 
@@ -45,9 +44,16 @@
 	    }
 
 	    function createScanner(camera) {
-	    	const video = document.querySelector('video');
+	    	const video = document.createElement('video');
+	    	document.body.appendChild(video);
 
 	    	return new QrScanner(video, handleQRContent, handleError, undefined, camera);
+	    }
+
+	    function destroyScanner(scanner) {
+	    	scanner.stop();
+	    	scanner.$video.remove();
+	    	scanner.destroy()
 	    }
 
 	    function flash(type) {
