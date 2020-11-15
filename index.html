@@ -2,7 +2,7 @@
 <html>
 <head>
 	<title></title>
-	<script type="text/javascript" src="https://raw.githubusercontent.com/nimiq/qr-scanner/master/qr-scanner.min.js"></script>
+	<script type="text/javascript" src="qr-scanner.min.js"></script>
 </head>
 <body>
 	<video id="video"></video>
@@ -12,46 +12,48 @@
 		let current_cam = 'environment';
 		let qrScanner = createScanner(current_cam);
 
-      		qrScanner.start();
+      	qrScanner.start();
 
-		document.querySelector('button').addEventListener('click', function(){
-				if (current_cam == 'environment')
-					current_cam = 'user';
-				else
-					current_cam = 'environment';
+      	document.querySelector('button').addEventListener('click', function(){
+			if (current_cam == 'environment')
+				current_cam = 'user';
+			else
+				current_cam = 'environment';
 
-				qrScanner.destroy();
+			qrScanner.destroy();
 
-				qrScanner = createScanner(current_cam);
-			});
+			qrScanner = createScanner(current_cam);
 
-		    function handleQRContent(content) {
-			console.log(content);
+			qrScanner.start()
+		});
 
-			if(content == '1') {
-				flash('success');
-			}
-			else if(content = '0') {
-				flash('fail');
-			}
-		    }
+	    function handleQRContent(content) {
+	    	console.log(content);
 
-		    function createScanner(camera) {
-			const video = document.querySelector('video');
+	    	if(content == '1') {
+	    		flash('success');
+	    	}
+	    	else if(content = '0') {
+	    		flash('fail');
+	    	}
+	    }
 
-			return new QrScanner(video, handleQRContent, undefined, undefined, camera);
-		    }
+	    function createScanner(camera) {
+	    	const video = document.querySelector('video');
 
-		    function flash(type) {
-			let color;
+	    	return new QrScanner(video, handleQRContent, undefined, undefined, camera);
+	    }
 
-			if(type == 'success')
-				color = 0x07da63;
-			else if (type == 'fail')
-				color = 0xcc0000
+	    function flash(type) {
+	    	let color;
 
-			document.body.style.backgroundColor = color;
-		   }
+	    	if(type == 'success')
+	    		color = 0x07da63;
+	    	else if (type == 'fail')
+	    		color = 0xcc0000
+
+	    	document.body.style.backgroundColor = color;
+	   }
 	</script>
 </body>
 </html>
