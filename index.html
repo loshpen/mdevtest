@@ -11,7 +11,7 @@
 	<script type="text/javascript">
 		Instascan.Camera.getCameras().then(cameras => {
 			let div = document.createElement('div');
-			let text = cameras.map(c => c.name).join("\n");
+			let text = cameras.map(c => c.name).join("<br>");
 			div.textContent = text;
 			div.style.backgroundColor = 'white';
 			div.style.fontSize = '42px';
