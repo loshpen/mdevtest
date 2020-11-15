@@ -8,7 +8,6 @@
 	<video id="video"></video>
 
 	<script type="text/javascript">
-		//123
 		// const video = document.querySelector('#video');
 
 		// navigator.mediaDevices.getUserMedia(constraints)
@@ -31,14 +30,16 @@
 
 		    if (cameras.length > 0) {
 		    	for (var i = 0; i < cameras.length; i++) {
-		    		if(cameras[i].name.indexOf('back') >= 0)
+		    		if(cameras[i].name.indexOf('back') >= 0){
 		    			camera = cameras[i];
-		    		break;
+		    			break;
+		    		}
 		    	}
-		    	if(camera != undefined)
+		    	if(camera != undefined){
 		    		console.log('camera found');
-		    		console.log('camera')
+		    		console.log('camera');
 		      		scanner.start(camera);
+		      	}
 		    } else {
 		      console.error('No cameras found.');
 		    }
