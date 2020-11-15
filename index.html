@@ -9,7 +9,7 @@
 
 	<script type="text/javascript">
 		const video = document.querySelector('#video');
-		const current_cam = 'environmental';
+		const current_cam = 'environment';
 		const constraints = {video: {facingMode: current_cam}};
 
 		navigator.mediaDevices.getUserMedia(constraints)
@@ -21,10 +21,10 @@
 		});
 
 		document.querySelector('button').addEventListener('click', function(){
-			if (current_cam == 'environmental')
+			if (current_cam == 'environment')
 				constraints.video.facingMode = 'user';
 			else
-				constraints.video.facingMode = 'environmental';
+				constraints.video.facingMode = 'environment';
 		});
 	</script>
 	<button>Switch Camera</button>
