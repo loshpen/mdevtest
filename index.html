@@ -9,7 +9,7 @@
 			video: {facingMode: 'environment'}
 		};
 
-		navigator.mediaDevies.getUserMedia(constraints)
+		navigator.mediaDevices.getUserMedia(constraints)
 		.then(stream => {
 			console.log(stream.getVideoTracks());
 		}).catch(err => {
