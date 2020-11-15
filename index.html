@@ -45,13 +45,19 @@
 		    			break;
 		    		}
 		    	}
-		    	if(camera != undefined){
-		    		console.log('camera found');
-		    		console.log(camera);
-		      		scanner.start(camera);
+		    	if(camera == undefined){
+		      		if(isIos())
+		      			camera = cameras[1];
+		      		else
+		      			camera = cameras[0];
 		      	}
-		      	else
-		      		camera = cameras[0];
+				
+				try
+					scanner.start(camera);
+				catch e {
+					alert(e);
+				}
+		      	
 		    } else {
 		      console.error('No cameras found.');
 		    }
@@ -80,6 +86,19 @@
 
 	    	document.body.style.backgroundColor = color;
 	    }
+
+	    function isIos() {
+		  return [
+		    'iPad Simulator',
+		    'iPhone Simulator',
+		    'iPod Simulator',
+		    'iPad',
+		    'iPhone',
+		    'iPod'
+		  ].includes(navigator.platform)
+		  // iPad on iOS 13 detection
+		  || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+		}
 	</script>
 </body>
 </html>
