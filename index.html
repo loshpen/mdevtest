@@ -19,7 +19,7 @@
 				current_cam = 'user';
 			else
 				current_cam = 'environment';
-		
+
 			qrScanner.stop();
 
 			qrScanner.destroy();
@@ -40,10 +40,14 @@
 	    	}
 	    }
 
+	    function handleError(err){
+	    	console.log(err);
+	    }
+
 	    function createScanner(camera) {
 	    	const video = document.querySelector('video');
 
-	    	return new QrScanner(video, handleQRContent, undefined, undefined, camera);
+	    	return new QrScanner(video, handleQRContent, handleError, undefined, camera);
 	    }
 
 	    function flash(type) {
