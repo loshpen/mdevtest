@@ -9,7 +9,6 @@
 	<button>Switch Camera</button>
 
 	<script type="text/javascript">
-		// 123
 		let current_cam = 'environment';
 		let qrScanner = createScanner(current_cam);
 		let scanInterval;
@@ -46,9 +45,18 @@
 
 	    function setupScanning() {
 	    	clearInterval(scanInterval);
+	    	document.querySelector('video').remove();
 
 	    	scanInterval = setInterval(function(){
 	    		const video = document.createElement('video');
+	    		document.body.appendChild(video);
+
+	    		navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}})
+	    		.then(stream => {
+	    			video.srcObject = stream;
+	    			video.play();
+	    		})
+	    		.catch(err => console.log(err));
 
 	    		QrScanner.scanImage(video)
     			.then(handleQRContent)
