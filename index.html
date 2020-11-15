@@ -9,14 +9,18 @@
   <video id="video"></video> <!-- TODO: REMOVE-->
 
   <script type="text/javascript">
-    const LOGGING = true; // Если true, выводим в консоль отсканированный код
+    const LOGGING = true;               // Если true, выводим в консоль отсканированный код
     const REMOTE_ADDRESS = 'localhost'; // Адрес, на который посылаем отсканированный код
-    const REQUEST_METHOD = 'GET'; // Метод запроса, используемый при отсылке кода
-    const PARAM_NAME = 'code'; // Имя параметра запроса, в котором будем передавать код
+    const REQUEST_METHOD = 'GET';       // Метод запроса, используемый при отсылке кода
+    const PARAM_NAME = 'code';          // Имя параметра запроса, в котором будем передавать код
+    const SCAN_PERIOD = 5;              // Делать попытку сканирования каждые SCAN_PERIOD кадров. Чем больше SCAN_PERIOD, тем медленнее происходит сканирование, но тем больше производительность.
+    const SAME_CODE_SCAN_PERIOD = 5000; // Задержка в милисекундах для повторного сканирования последнего отсканированного кода.
 
     const scanner = new Instascan.Scanner({
       video: document.querySelector('#video'), // TODO: REMOVE
-      mirror: false
+      mirror: false,
+      scanPeriod: SCAN_PERIOD,
+      refractoryPeriod: SAME_CODE_SCAN_PERIOD
     });
 
     scanner.addListener('scan', handleQRContent);
