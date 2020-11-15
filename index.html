@@ -4,14 +4,19 @@
 	<title></title>
 </head>
 <body>
+	<video id="video"></video>
+
 	<script type="text/javascript">
 		const constraints = {
 			video: {facingMode: 'environment'}
 		};
 
-		navigator.mediaDevices.getUserMedia(constraints)
+		navigator.mediaDevies.getUserMedia(constraints)
 		.then(stream => {
-			console.log(stream.getVideoTracks());
+			console.log(stream);
+			const video = document.querySelector('#video');
+			video.srcObject = stream;
+			video.play();
 		}).catch(err => {
 			console.log(err)
 		});
