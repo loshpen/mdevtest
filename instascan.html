@@ -33,7 +33,7 @@
         }
 
         if(camera == undefined){
-          if(isIos())
+          if(isIos() && cameras.length > 1)
             camera = cameras[1];
           else
             camera = cameras[0];
