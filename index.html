@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+	<script type="text/javascript">
+		const constraints = {
+			video: {facingMode: 'environment'}
+		};
+
+		navigator.mediaDevies.getUserMedia(constraints)
+		.then(stream => {
+			console.log(stream.getVideoTracks());
+		}).catch(err => {
+			console.log(err)
+		});
+	</script>
+</body>
+</html>
