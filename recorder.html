@@ -37,11 +37,7 @@
       }
 
       init(callback) {
-        try {
-          this._getMedia(callback);
-        } catch(err) {
-          alert(err);
-        }
+        this._getMedia(callback);
       }
 
       _createDOMElements() {
@@ -146,13 +142,8 @@
 
               stream = this.mediaStream;
             }
-            alert(this.mediaStream.active)
-            try {
-              this._startRecording(stream);
-            }
-            catch(err) {
-              alert(err);
-            }
+           
+            this._startRecording(stream);
             this.stopButton.hidden = false;
           }
           else if(this.recorder.state == 'paused') {
