@@ -37,7 +37,11 @@
       }
 
       init(callback) {
-        this._getMedia(callback);
+        try {
+          this._getMedia(callback);
+        } catch(err) {
+          alert(err);
+        }
       }
 
       _createDOMElements() {
