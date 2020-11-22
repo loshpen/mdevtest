@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <meta charset="utf-8">
+  <style type="text/css">
+    video {
+      width: 50%;
+      margin: 0 auto 20px auto;
+      display: block;
+      margin-bottom: 20px;
+    }
+
+    button {
+      margin-right: 10px;
+      font-size: 30px;
+    }
+
+    .recording-time {
+      font-size: 40px;
+      margin: 20px;
+    }
+
+    .controls, .recording-time {
+      width: fit-content;
+      margin: auto;
+    }
+  </style>
+  <script type="text/javascript">
+    class RecorderApp {
+      constructor(options) {
+        this.mediaPartSize = options.mediaPartSize || 1024 * 1024; // Получившуюся запись будем отправлять частями, размером mediaPartSize байт
+        this.serverAddress = options.serverAddress || 'http://localhost'; // Адрес, на который отправляем получившуюся запись
+
+        this._createDOMElements();
+        this._setupListeners();
+      }
+
+      init(callback) {
+        this._getMedia(callback);
+      }
+
+      _createDOMElements() {
+        this.container = document.createElement('div');
+        this.recordVideoButton = document.createElement('button');
+        this.recordAudioButton = document.createElement('button');
+        this.stopButton = document.createElement('button');
+        this.video = document.createElement('video');
+        this.recordingTime = document.createElement('div');
+        this.controls = document.createElement('div');
+
+        this.video.hidden = true;
+        this.video.muted = true;
+        this.stopButton.hidden = true;
+
+        this.recordingTime.className = 'recording-time';
+        this.controls.className = 'controls';
+
+        this.recordAudioButton.dataset.type = 'Аудио';
+        this.recordVideoButton.dataset.type = 'Видео';
+
+        this.recordVideoButton.reset = () => {
+          this.recordVideoButton.recording = false;
+          this.recordVideoButton.hidden = false;
+          this.recordVideoButton.textContent = 'Записать Видео';
+        }
+
+        this.recordAudioButton.reset = () => {
+          this.recordAudioButton.recording = false;
+          this.recordAudioButton.hidden = false;
+          this.recordAudioButton.textContent = 'Записать Аудио';
+        }
+
+        this.recordVideoButton.reset();
+        this.recordAudioButton.reset();
+
+        this.stopButton.textContent = 'Остановить запись';
+
+        this.controls.appendChild(this.recordVideoButton);
+        this.controls.appendChild(this.recordAudioButton);
+        this.controls.appendChild(this.stopButton);
+        this.container.appendChild(this.video);
+        this.container.appendChild(this.controls);
+        this.container.appendChild(this.recordingTime);
+      }
+
+      _setupListeners() {
+        this.recordVideoButton.addEventListener('click', (e) => this._recordButtonHandler(e.currentTarget));
+        this.recordAudioButton.addEventListener('click', (e) => this._recordButtonHandler(e.currentTarget));
+        this.stopButton.addEventListener('click', () => this._stopButtonHandler());
+      }
+
+      _getMedia(callback) {
+        const audioOnlyConstraints = {audio: true};
+        const videoConstraints = {audio: true, video: {facingMode: "user"}};
+
+        navigator.mediaDevices.getUserMedia(videoConstraints)
+        .then(stream => {
+          console.log('Found video source');
+          this.mediaStream = stream;
+          this.video.hidden = false;
+          this.video.srcObject = this.mediaStream;
+          this.video.play();
+
+          callback();
+        })
+        .catch(() => {
+          navigator.mediaDevices.getUserMedia(audioOnlyConstraints)
+          .then(stream => {
+            console.log('Found audio source');
+            this.mediaStream = stream;
+            this.recordVideoButton.disabled = true;
+
+            callback();
+          })
+          .catch(err => {
+            alert('Не найдены устройства записи видео или аудио, или не получено разрешение на использование этих устройств.');
+            console.error(err);
+          });
+        });
+      }
+
+      _recordButtonHandler(button) {
+        if(button.recording) {
+          console.log('stopping recorder');
+          this.recorder.paused_at = Date.now();
+          this.recorder.pause();
+        }
+        else {
+          if(this.recorder == undefined) {
+            console.log('starting recording');
+
+            let stream;
+
+            if(button.dataset.type === 'Аудио') {
+              this.recordVideoButton.hidden = true;
+
+              stream = new MediaStream(this.mediaStream.getAudioTracks());
+            }
+            else {
+              this.recordAudioButton.hidden = true;
+
+              stream = this.mediaStream;
+            }
+
+            this._startRecording(stream);
+            this.stopButton.hidden = false;
+          }
+          else if(this.recorder.state == 'paused') {
+            console.log('continuing recording');
+
+            this.recorder.skippedTime += Date.now() - this.recorder.paused_at;
+
+            this.recorder.paused_at = null;
+            this.recorder.resume();
+          }
+        }
+
+        this._toggleRecordButtonState(button);
+      }
+
+      _stopButtonHandler() {
+        this.stopButton.hidden = true;
+        this.recorder.stop();
+
+        this.recordVideoButton.reset();
+        this.recordAudioButton.reset();
+      }
+
+      _startRecording(stream) {
+        this.recorder = new MediaRecorder(stream);
+
+        this.recorder.ondataavailable = (event) => {
+          this._handleRecording(event);
+
+          clearInterval(this.recorder.timer);
+          this.recordingTime.textContent = '';
+
+          this.recorder = null;
+        }
+
+        this.recorder.startedAt = Date.now();
+        this.recorder.skippedTime = 0;
+
+        this._startRecordTimer();
+
+        this.recorder.start();
+      }
+
+      _startRecordTimer() {
+        this.recorder.timer = setInterval(()=> {
+          const endOfTimeRange = this.recorder.paused_at || Date.now();
+          const secondsPassed = Math.floor(
+            (endOfTimeRange - this.recorder.startedAt - this.recorder.skippedTime) / 1000
+          );
+          const minutes = Math.floor(secondsPassed / 60);
+          const seconds = secondsPassed - 60 * minutes;
+
+          this.recordingTime.textContent = `${this.recorder.state == 'recording' ? '🔴' : ''} ${ minutes }:${ ('0' + seconds.toString()).slice(-2) }`;
+        }, 100);
+      }
+
+      _handleRecording(event) {
+        this.result = new Blob([event.data], {type: event.data.type});
+
+        //this._uploadResult(); // Залить файл на сервер
+        this._downloadResult(); // Скачать файл локально
+      }
+
+      _downloadResult() {
+        if(!confirm('Скачать видео?')) {
+          this.result = null;
+
+          return;
+        }
+
+        const url = window.URL.createObjectURL(this.result);
+        let download_link = document.createElement('a');
+
+        download_link.href = url;
+        download_link.download = this._generateFileName();
+        download_link.click();
+        download_link = null;
+
+        window.URL.revokeObjectURL(this.result);
+      }
+
+      _uploadResult() {
+        if(!confirm('Сохранить запись?')){
+          this.result = null;
+
+          return;
+        }
+
+        const parts_count = Math.ceil(this.result.size / this.mediaPartSize);
+        const parts = [];
+
+        for(let i = 0; i < parts_count; i++) {
+          parts.push(this.result.slice(i * this.mediaPartSize, Math.min(this.mediaPartSize * (i + 1), this.result.size + 1), this.result.type));
+        }
+
+        console.log(parts);
+
+        const uploadId = this._generateUploadId();
+
+        let finishedRequests = 0;
+
+        const uploadRequests = parts.map((part, index) => {
+          const request = new XMLHttpRequest();
+
+          request.open('POST', this.serverAddress);
+
+          request.setRequestHeader('Upload-Id', uploadId);
+          request.setRequestHeader('Portion-From', index * this.mediaPartSize);
+
+          request.onreadystatechange = () => {
+            if(request.readyState === XMLHttpRequest.DONE && request.status === 200) {
+              finishedRequests++;
+
+              if(finishedRequests === uploadRequests.length) {
+                const eofRequest = new XMLHttpRequest();
+                const filename = this._generateFileName();
+                const fileExt = this._getExtensionFromMimeType(this.result.type.split(';')[0]);
+                const params = `?action=done&name=${ encodeURIComponent(filename) }.${ fileExt }`;
+
+                eofRequest.open('GET', this.serverAddress + params);
+
+                eofRequest.setRequestHeader('Upload-Id', uploadId);
+                eofRequest.setRequestHeader('MIME-Type', this.result.type);
+
+                eofRequest.onreadystatechange = () => {
+                  if(eofRequest.readyState === XMLHttpRequest.DONE && eofRequest.status === 200) {
+                    alert('Запись загружена на сервер');
+                  }
+                };
+
+                eofRequest.send();
+              };
+            }
+          };
+
+          return request;
+        });
+
+        console.log(uploadRequests);
+
+        uploadRequests.forEach((request, index) => request.send(parts[index]));
+      }
+
+      _generateUploadId() {
+        const alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let id = '';
+
+        for(let i = 0; i < 10; i++)
+          id += alphabet[Math.floor(Math.random() * alphabet.length)];
+
+        return id;
+      }
+
+      _generateFileName() {
+        return (new Date()).toUTCString();
+      }
+
+      _toggleRecordButtonState(button) {
+        if(button.recording) {
+          button.recording = false;
+          button.textContent = `Записать ${ button.dataset.type }`;
+        }
+        else {
+          button.recording = true;
+          button.textContent = 'Пауза'; 
+        }
+      }
+
+      _getExtensionFromMimeType(type) { // Возможно, имеет смысл определять расширение файла на сервере по содержимому, либо по MIME, переданному с клиента через заголовок в запросе завершения аплоада.
+        return {
+          "audio/3gpp":"3gpp",
+          "audio/adpcm":"adp",
+          "audio/basic":"au",
+          "audio/midi":"mid",
+          "audio/mobile-xmf":"mxmf",
+          "audio/mp3":"mp3",
+          "audio/mp4":"m4a",
+          "audio/mpeg":"mpga",
+          "audio/ogg":"oga",
+          "audio/s3m":"s3m",
+          "audio/silk":"sil",
+          "audio/vnd.dece.audio":"uva",
+          "audio/vnd.digital-winds":"eol",
+          "audio/vnd.dra":"dra",
+          "audio/vnd.dts":"dts",
+          "audio/vnd.dts.hd":"dtshd",
+          "audio/vnd.lucent.voice":"lvp",
+          "audio/vnd.ms-playready.media.pya":"pya",
+          "audio/vnd.nuera.ecelp4800":"ecelp4800",
+          "audio/vnd.nuera.ecelp7470":"ecelp7470",
+          "audio/vnd.nuera.ecelp9600":"ecelp9600",
+          "audio/vnd.rip":"rip",
+          "audio/wav":"wav",
+          "audio/wave":"wav",
+          "audio/webm":"weba",
+          "audio/x-aac":"aac",
+          "audio/x-aiff":"aif",
+          "audio/x-caf":"caf",
+          "audio/x-flac":"flac",
+          "audio/x-m4a":"m4a",
+          "audio/x-matroska":"mka",
+          "audio/x-mpegurl":"m3u",
+          "audio/x-ms-wax":"wax",
+          "audio/x-ms-wma":"wma",
+          "audio/x-pn-realaudio":"ram",
+          "audio/x-pn-realaudio-plugin":"rmp",
+          "audio/x-realaudio":"ra",
+          "audio/x-wav":"wav",
+          "audio/xm":"xm",
+          "video/3gpp":"3gp",
+          "video/3gpp2":"3g2",
+          "video/h261":"h261",
+          "video/h263":"h263",
+          "video/h264":"h264",
+          "video/jpeg":"jpgv",
+          "video/jpm":"jpm",
+          "video/mj2":"mj2",
+          "video/mp2t":"ts",
+          "video/mp4":"mp4",
+          "video/mpeg":"mpeg",
+          "video/ogg":"ogv",
+          "video/quicktime":"qt",
+          "video/vnd.dece.hd":"uvh",
+          "video/vnd.dece.mobile":"uvm",
+          "video/vnd.dece.pd":"uvp",
+          "video/vnd.dece.sd":"uvs",
+          "video/vnd.dece.video":"uvv",
+          "video/vnd.dvb.file":"dvb",
+          "video/vnd.fvt":"fvt",
+          "video/vnd.mpegurl":"mxu",
+          "video/vnd.ms-playready.media.pyv":"pyv",
+          "video/vnd.uvvu.mp4":"uvu",
+          "video/vnd.vivo":"viv",
+          "video/webm":"webm",
+          "video/x-f4v":"f4v",
+          "video/x-fli":"fli",
+          "video/x-flv":"flv",
+          "video/x-m4v":"m4v",
+          "video/x-matroska":"mkv",
+          "video/x-mng":"mng",
+          "video/x-ms-asf":"asf",
+          "video/x-ms-vob":"vob",
+          "video/x-ms-wm":"wm",
+          "video/x-ms-wmv":"wmv",
+          "video/x-ms-wmx":"wmx",
+          "video/x-ms-wvx":"wvx",
+          "video/x-msvideo":"avi",
+          "video/x-sgi-movie":"movie",
+          "video/x-smv":"smv"
+        }[type]
+      }
+    }
+
+    window.onload = () => {
+      window.app = new RecorderApp({
+        serverAddress: 'https://zz.hgfdsa.ru/php/test/upload_part.php'
+      });
+
+      app.init(()=> {
+        document.body.appendChild(app.container);
+      });
+    }
+  </script>
+</head>
+<body>
+</body>
+</html>
