@@ -142,8 +142,12 @@
 
               stream = this.mediaStream;
             }
-
-            this._startRecording(stream);
+            alert(this.mediaStream.active)
+            try {
+              this._startRecording(stream);
+            catch(err) {
+              alert(err);
+            }
             this.stopButton.hidden = false;
           }
           else if(this.recorder.state == 'paused') {
