@@ -96,7 +96,6 @@
 
         navigator.mediaDevices.getUserMedia(videoConstraints)
         .then(stream => {
-          console.log('Found video source');
           this.mediaStream = stream;
           this.video.hidden = false;
           this.video.srcObject = this.mediaStream;
@@ -105,9 +104,8 @@
           callback();
         })
         .catch(() => {
-          navigator.mediaDevices.getUserMedia(audioOnlyConstraints)
+          navigator.mediaDevices.getUserMedia(audioOnlyConstraints) // Пробуем только аудио, если не получилось аудио и видео, т.к. в первом случае поток вернется, только если доступно аудио И видео.
           .then(stream => {
-            console.log('Found audio source');
             this.mediaStream = stream;
             this.recordVideoButton.disabled = true;
 
@@ -122,14 +120,11 @@
 
       _recordButtonHandler(button) {
         if(button.recording) {
-          console.log('stopping recorder');
           this.recorder.paused_at = Date.now();
           this.recorder.pause();
         }
         else {
           if(this.recorder == undefined) {
-            console.log('starting recording');
-
             let stream;
 
             if(button.dataset.type === 'Аудио') {
@@ -147,8 +142,6 @@
             this.stopButton.hidden = false;
           }
           else if(this.recorder.state == 'paused') {
-            console.log('continuing recording');
-
             this.recorder.skippedTime += Date.now() - this.recorder.paused_at;
 
             this.recorder.paused_at = null;
@@ -239,8 +232,6 @@
           parts.push(this.result.slice(i * this.mediaPartSize, Math.min(this.mediaPartSize * (i + 1), this.result.size + 1), this.result.type));
         }
 
-        console.log(parts);
-
         const uploadId = this._generateUploadId();
 
         let finishedRequests = 0;
@@ -250,8 +241,8 @@
 
           request.open('POST', this.serverAddress);
 
-          request.setRequestHeader('Upload-Id', uploadId);
-          request.setRequestHeader('Portion-From', index * this.mediaPartSize);
+          request.setRequestHeader('Upload-Id', uploadId);   // Т.к. мы ставим нестандартные заголовки, браузер перед отправкой запроса отправит запрос OPTIONS на тот же самый URL.
+          request.setRequestHeader('Portion-From', index * this.mediaPartSize); // Чтобы наши запросы с данными отправились, запрос OPTIONS должен вернуть статус 200.
 
           request.onreadystatechange = () => {
             if(request.readyState === XMLHttpRequest.DONE && request.status === 200) {
@@ -281,8 +272,6 @@
 
           return request;
         });
-
-        console.log(uploadRequests);
 
         uploadRequests.forEach((request, index) => request.send(parts[index]));
       }
@@ -403,7 +392,7 @@
       });
 
       app.init(()=> {
-        document.body.appendChild(app.container);
+        document.body.appendChild(app.container); // Добавляем интерфейс в DOM в колбэке, т.к. получение доступа к медиапотокам происходит асинхронно.
       });
     }
   </script>
