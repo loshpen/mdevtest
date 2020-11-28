@@ -100,7 +100,7 @@
           this.mediaStream = stream;
           this.video.hidden = false;
           this.video.srcObject = this.mediaStream;
-          this.video.play();
+          this.video.onloadedmetadata = () => this.video.play();
 
           callback();
         })
